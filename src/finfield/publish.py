@@ -167,8 +167,12 @@ class Publisher:
         )
         from .sources.sec_edgar import _ssl_context
 
-        with urllib.request.urlopen(req, timeout=20, context=_ssl_context()) as resp:
-            return {"status": resp.status, "head": head["root"][:16], "length": head["length"]}
+        try:
+            with urllib.request.urlopen(req, timeout=20, context=_ssl_context()) as resp:
+                return {"status": resp.status, "head": head["root"][:16], "length": head["length"]}
+        except Exception as exc:
+            # best-effort: peers can always bootstrap the feed over HTTPS
+            return {"status": "unreachable", "error": str(exc), "head": head["root"][:16]}
 
     async def serve(self, relay_url: str = DEFAULT_RELAY, host: str = "127.0.0.1", port: int = 0):
         """Run a P2P node offering the feed for replication (Ctrl-C to stop)."""
