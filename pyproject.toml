@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finfield"
+version = "0.1.0"
+description = "Open, provenance-first financial facts for 20,000+ listed companies, knitted into the knitweb P2P network"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+# P2P publishing needs the pulse runtime:
+#   pip install "knitweb @ git+https://github.com/knitweb/pulse"
+
+[project.scripts]
+finfield = "finfield.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+finfield = ["data/*.csv"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

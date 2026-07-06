@@ -1,0 +1,9 @@
+field: finfield
+name: FinField
+tagline: Open, provenance-first financial facts for 20,000+ listed companies
+homepage: https://finfield.github.io
+docs:
+  - title: Architecture
+    url: https://github.com/FinField/finfield#architecture
+  - title: Knitweb plugin contract
+    url: https://github.com/knitweb/pulse/blob/main/docs/LENS_EXPORT_BOUNDARY.md
