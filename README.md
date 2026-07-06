@@ -41,9 +41,13 @@ finfield knit  "AAPL US"                  # sign + weave into a knitweb Web (nee
 
 No fact enters the web without: an exact integer value, a unit, a dated period, and a traceable source; derived facts must name their inputs. `finfield.knit.check_fact` gates every `emit`.
 
-### P2P updates
+### P2P updates — no local store
 
-Records are content-addressed and signed. A new filing produces new facts with new CIDs; restatements coexist with the originals (latest accession wins in the smart layer). Peers accept a record iff the CID matches the canonical bytes and the signature matches the author field — trust-free adoption, no central updater.
+FinField data never lives on the ingest machine. The canonical feed (append-only shards + signed head) lives in [`FinField/facts`](https://github.com/FinField/facts), served over HTTPS by the field infrastructure (finfield.github.io, 5mart.ml's git-pull deploy). Any knitweb node bootstraps from there, verifies the head signature and every record CID, and replicates onward with feed-request/feed-data anti-entropy. `finfield serve --repo <clone>` runs such a node (NAT-friendly via the 5mart.ml relay); `finfield announce` drops the signed head in a relay mailbox so live nodes learn of updates.
+
+Records are content-addressed and signed. A new filing produces new facts with new CIDs; publishing is idempotent per CID, so a re-ingest appends only the delta. Restatements coexist with the originals (latest accession wins in the smart layer). Peers accept a record iff the CID matches the canonical bytes and the signature matches the author field — trust-free adoption, no central updater.
+
+Bulk: `scripts/bulk_publish.py companyfacts.zip <facts-clone>` streams the whole SEC corpus (20k+ reporters) into the feed — latest observation per core concept (shares outstanding and free float `dei:EntityPublicFloat` as date-tied integers, income/balance/cashflow lines, EPS) — then the zip and working copy are deleted.
 
 ## Data licensing
 

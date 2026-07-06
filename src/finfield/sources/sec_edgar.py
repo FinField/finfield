@@ -15,9 +15,10 @@ import json
 import ssl
 import time
 import urllib.request
+import zipfile
 from datetime import date
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 from ..model import Entity, FactSet, FinFact, Period, Source, to_scaled
 from .base import FactSource
@@ -25,6 +26,25 @@ from .base import FactSource
 USER_AGENT = "FinField/0.1 (open financial facts; contact: develuse@gmail.com)"
 TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
 COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
+BULK_URL = "https://www.sec.gov/Archives/edgar/daily-index/xbrl/companyfacts.zip"
+
+
+def iter_bulk(zip_path: Path) -> Iterator[tuple[int, dict]]:
+    """Stream (cik, companyfacts_doc) from the SEC bulk archive.
+
+    The ~1.4 GB companyfacts.zip carries the whole XBRL corpus (20k+
+    reporters); streaming from the zip avoids a 10 GB extraction.
+    """
+    with zipfile.ZipFile(zip_path) as z:
+        for name in z.namelist():
+            if not name.startswith("CIK") or not name.endswith(".json"):
+                continue
+            try:
+                cik = int(name[3:-5])
+                doc = json.loads(z.read(name))
+            except (ValueError, json.JSONDecodeError):
+                continue
+            yield cik, doc
 
 
 def _ssl_context() -> ssl.SSLContext:

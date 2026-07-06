@@ -112,10 +112,10 @@ class FinFieldKnitweb:
         att = self.emit(fact, derived_from_cids)
         return web.weave(att.record), att
 
-    def weave_entity(self, entity: Entity, web: "Web") -> str:
+    def weave_entity(self, entity: Entity, web: "Web") -> tuple[str, "Attestation"]:
         rec = self.entity_record(entity)
         att = attest(rec, self._priv, author_field="author")
-        return web.weave(att.record)
+        return web.weave(att.record), att
 
     def weave_factset(
         self, fs: FactSet, web: "Web", derived: Optional[list] = None
@@ -125,9 +125,9 @@ class FinFieldKnitweb:
 
         Returns {"entity": cid, "facts": {ff1_cid: knit_cid}, "attestations": [...]}.
         """
-        entity_cid = self.weave_entity(fs.entity, web)
+        entity_cid, entity_att = self.weave_entity(fs.entity, web)
         knit_cid_by_ff1: dict[str, str] = {}
-        atts = []
+        atts = [entity_att]
         for fact in fs.facts:
             kcid, att = self.weave(fact, web)
             knit_cid_by_ff1[fact.cid] = kcid

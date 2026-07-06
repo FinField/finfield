@@ -92,9 +92,45 @@ def cmd_knit(args) -> None:
     print(f"woven {len(result['facts'])} fact records ({len(derived)} derived): {nodes} nodes, {edges} edges")
 
 
+def cmd_publish(args) -> None:
+    from .publish import Publisher
+    from .smart.derive import derive_all
+
+    fs = _fetch(args.ticker)
+    pub = Publisher(Path(args.repo))
+    n = pub.publish_factset(fs, derived=derive_all(fs))
+    head = pub.commit()
+    print(f"published {n} new records; feed length {head['length']}, root {head['root'][:20]}…")
+
+
+def cmd_announce(args) -> None:
+    from .publish import Publisher
+
+    print(json.dumps(Publisher(Path(args.repo)).announce()))
+
+
+def cmd_serve(args) -> None:
+    import asyncio
+
+    from .publish import Publisher
+
+    asyncio.run(Publisher(Path(args.repo)).serve())
+
+
 def main(argv=None) -> None:
     p = argparse.ArgumentParser(prog="finfield")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    for name, fn, needs_ticker in (
+        ("publish", cmd_publish, True),
+        ("announce", cmd_announce, False),
+        ("serve", cmd_serve, False),
+    ):
+        s = sub.add_parser(name, help=f"{name} the feed (P2P)")
+        if needs_ticker:
+            s.add_argument("ticker")
+        s.add_argument("--repo", required=True, help="feed-repo working copy (e.g. a FinField/facts clone)")
+        s.set_defaults(fn=fn)
 
     u = sub.add_parser("universe", help="list the 20k+ company universe")
     u.add_argument("--active", action="store_true")
