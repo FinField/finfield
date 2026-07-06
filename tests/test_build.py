@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from finfield.build import build, curated_annual, shard, shard_rel_path, verify
+from finfield.build import build, curated_annual, julian_day, shard, shard_rel_path, verify
 from finfield.model import Entity, FactSet, FinFact, Period, Source, cid
 
 SRC = Source(kind="sec-companyfacts", ref="0000320193-25-000073", fetched="2026-07-06")
@@ -43,9 +43,27 @@ def test_shard_carries_cid_and_provenance():
     assert doc["entity"]["ticker"] == "AAPL US"
     for fact in doc["facts"]:
         claimed = fact.pop("cid")
+        assert fact.pop("jdn") == julian_day(fact["period"]["end"])
         assert cid(fact) == claimed
         assert fact["source"]["kind"] == "sec-companyfacts"
         assert fact["source"]["ref"]
+
+
+def test_julian_day_known_values():
+    assert julian_day("2000-01-01") == 2451545
+    assert julian_day("1970-01-01") == 2440588
+    assert julian_day("2026-07-06") == 2461228
+    # strictly increasing across a month/year boundary
+    assert julian_day("2025-12-31") + 1 == julian_day("2026-01-01")
+
+
+def test_curated_includes_capex_and_opex():
+    fs = _factset()
+    fs.add(_fact("us-gaap:PaymentsToAcquirePropertyPlantAndEquipment", 11_000_000_000, "2025-09-27", "2024-09-29"))
+    fs.add(_fact("us-gaap:OperatingExpenses", 57_000_000_000, "2025-09-27", "2024-09-29"))
+    concepts = {f.concept for f in curated_annual(fs)}
+    assert "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment" in concepts
+    assert "us-gaap:OperatingExpenses" in concepts
 
 
 def test_shard_rel_path_layout():
