@@ -53,11 +53,27 @@ CURATED = {
         "us-gaap:StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
     ),
     "cash": ("us-gaap:CashAndCashEquivalentsAtCarryingValue",),
+    "capex": ("us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",),
+    "opex": ("us-gaap:OperatingExpenses", "us-gaap:CostsAndExpenses"),
     "shares_outstanding": (
         "dei:EntityCommonStockSharesOutstanding",
         "us-gaap:CommonStockSharesOutstanding",
     ),
 }
+
+
+def julian_day(iso_date: str) -> int:
+    """Julian day number of an ISO date (proleptic Gregorian, integer).
+
+    Time-varying facts (shares outstanding, supply) join across datasets on
+    this integer axis; it is derived from period.end, never stored in the
+    CID payload.
+    """
+    y, m, d = (int(p) for p in iso_date.split("-"))
+    a = (14 - m) // 12
+    y2 = y + 4800 - a
+    m2 = m + 12 * a - 3
+    return d + (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4 - y2 // 100 + y2 // 400 - 32045
 
 
 def safe_ticker(ticker: str) -> str:
@@ -97,7 +113,10 @@ def curated_annual(fs: FactSet) -> list[FinFact]:
 
 
 def fact_json(f: FinFact) -> dict:
-    return {"cid": f.cid, **f.payload()}
+    doc = {"cid": f.cid, **f.payload()}
+    if f.period.end:
+        doc["jdn"] = julian_day(f.period.end)
+    return doc
 
 
 def shard(entity: Entity, facts: Optional[FactSet] = None) -> dict:
@@ -230,6 +249,7 @@ def verify(data_dir: Path) -> int:
         doc = json.loads(p.read_text())
         for fact in doc.get("facts", []) + doc.get("derived", []):
             claimed = fact.pop("cid")
+            fact.pop("jdn", None)  # derived display field, not part of the CID payload
             if cid(fact) != claimed:
                 print(f"CID mismatch in {p}: {claimed}", file=sys.stderr)
                 bad += 1
