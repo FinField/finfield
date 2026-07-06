@@ -67,7 +67,7 @@ class FinFieldKnitweb:
 
     # -- records -----------------------------------------------------------
     def entity_record(self, entity: Entity) -> dict:
-        rec = {"kind": KIND_ENTITY, "ticker": entity.ticker, "author": self.address}
+        rec = {"kind": KIND_ENTITY, "ticker": entity.ticker, "asset": entity.asset, "author": self.address}
         for key in ("name", "country", "cik", "lei", "figi"):
             val = getattr(entity, key)
             if val:

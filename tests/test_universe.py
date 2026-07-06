@@ -23,3 +23,4 @@ def test_rows_wellformed():
     for e in iter_universe():
         assert e.ticker
         assert len(e.country) <= 3
+        assert e.asset in ("equity", "crypto")

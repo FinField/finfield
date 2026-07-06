@@ -56,6 +56,7 @@ class Entity:
     ticker: str
     name: str = ""
     country: str = ""
+    asset: str = "equity"  # asset class: equity | crypto
     cik: Optional[str] = None  # SEC Central Index Key (public domain)
     lei: Optional[str] = None  # GLEIF Legal Entity Identifier (open)
     figi: Optional[str] = None  # OpenFIGI (open standard)

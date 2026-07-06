@@ -52,14 +52,14 @@ def main() -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["ticker", "country", "name", "active", "first_seen", "last_seen"])
+        w.writerow(["ticker", "asset", "country", "name", "active", "first_seen", "last_seen"])
         for t in sorted(seen):
             rec = seen[t]
             meta = names.get(t, {})
             # country: prefer EDS master, else the exchange suffix of the composite ticker
             country = meta.get("country") or (t.split()[-1] if " " in t else "")
             active = meta.get("active") or ("1" if rec["live"] else "")
-            w.writerow([t, country, meta.get("name", ""), active, rec["first_seen"], rec["last_seen"]])
+            w.writerow([t, "equity", country, meta.get("name", ""), active, rec["first_seen"], rec["last_seen"]])
 
     print(f"wrote {OUT} with {len(seen)} tickers")
 

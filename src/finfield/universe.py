@@ -24,6 +24,7 @@ def iter_universe(path: Optional[Path] = None, active_only: bool = False) -> Ite
                 ticker=row["ticker"],
                 name=row.get("name", ""),
                 country=row.get("country", ""),
+                asset=row.get("asset") or "equity",
             )
 
 
